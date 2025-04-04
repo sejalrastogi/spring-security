@@ -269,10 +269,10 @@ For example:
 ```
 @Bean
 public UserDetailsService userDetailsService() {
-UserDetails user1 = User.withUsername("user1")
-.password("{noop}password1")
-.roles("USER")
-.build();
+    UserDetails user1 = User.withUsername("user1")
+                            .password("{noop}password1")
+                            .roles("USER")
+                            .build();
 
     UserDetails user2 = User.withUsername("user2")
                             .password("{noop}password2")
@@ -297,6 +297,60 @@ UserDetails user1 = User.withUsername("user1")
 
 - For production, users should be stored securely in a database and passwords should be properly encoded using a PasswordEncoder.
 
+### 7. How can we implement role-based access control at the method level in Spring Security?
+
+**Answer:**
+
+We can enforce role-based access control at the method level using annotations like **@PreAuthorize**, along with **@EnableMethodSecurity** in the configuration class. This is known as **method-level security**, and it allows you to secure individual controller methods based on user roles.
+
+**✅ Step-by-step setup:**
+
+1. Enable Method Security
+
+Add this annotation in your security configuration:
+    ```
+    @EnableMethodSecurity
+    ```
+
+This enables annotations like @PreAuthorize, @PostAuthorize, etc.
+
+2. Add Role-based Restrictions using @PreAuthorize:
+
+    ```
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/user")
+    public String userEndpoint() {
+        return "<h1>Hello, User!</h1>";
+    }
+   
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin")
+    public String adminEndpoint() {
+        return "<h1>Hello, Admin!</h1>";
+    }
+   ```
+
+**How it works:**
+
+- When a user accesses **/user**, Spring checks if the authenticated user has the role **USER**.
+
+- Similarly, for **/admin**, the user must have the role **ADMIN**.
+
+- If the condition fails, Spring returns a 403 Forbidden.
+
+**Note:**
+
+- Make sure your users have roles defined correctly in your UserDetailsService.
+
+**Example user setup:**
+
+```
+    UserDetails user = User.withUsername("user1")
+    .password("{noop}pass")
+    .roles("USER") // automatically becomes ROLE_USER
+    .build();
+```
+    
 
 
 
