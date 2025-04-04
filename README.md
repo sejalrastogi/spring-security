@@ -260,6 +260,43 @@ Other Session Policies:
 
 Using STATELESS makes your app more secure, predictable, and scalable.
 
+### 6. How do we configure in-memory users in Spring Security, and why is it important?
+Answer:
+In Spring Security, we can configure in-memory users using the UserDetailsService bean with InMemoryUserDetailsManager. This allows us to define a list of users, their passwords, and their roles directly in the code, without connecting to a database.
+
+For example:
+
+```
+@Bean
+public UserDetailsService userDetailsService() {
+UserDetails user1 = User.withUsername("user1")
+.password("{noop}password1")
+.roles("USER")
+.build();
+
+    UserDetails user2 = User.withUsername("user2")
+                            .password("{noop}password2")
+                            .roles("ADMIN")
+                            .build();
+
+    return new InMemoryUserDetailsManager(user1, user2);
+}
+```
+
+**This is especially useful for:**
+
+- Quickly setting up authentication during development or testing
+
+- Demonstrating role-based access control without complex setup
+
+**However, it’s important to note:**
+
+- The {noop} prefix disables password encoding (not recommended for production).
+
+- In-memory storage is not persistent — users reset when the app restarts.
+
+- For production, users should be stored securely in a database and passwords should be properly encoded using a PasswordEncoder.
+
 
 
 
