@@ -353,7 +353,7 @@ This enables annotations like @PreAuthorize, @PostAuthorize, etc.
 
 ## H2 Database
 
-### What is the H2 database, and why do we use it in Spring Boot projects?
+### 8. What is the H2 database, and why do we use it in Spring Boot projects?
 
 **Answer:**
 
@@ -466,11 +466,127 @@ This tells Spring Security:
 
 **Answer:**
 
-- Do not use .csrf().disable() in production.
+- Do not use `.csrf().disable()` in production.
 
-- Do not expose /h2-console/** endpoints in a live environment.
+- Do not expose `/h2-console/**` endpoints in a live environment.
 
 - The H2 database itself is not meant for production use — always replace it with a persistent database.
+
+## JDBC Authentication
+
+### 9. What is JDBC Authentication in Spring Security?
+Detailed Explanation:
+
+JDBC Authentication is a mechanism where Spring Security authenticates users by querying a relational database using JDBC (Java Database Connectivity). Instead of using hardcoded users like in-memory authentication, it fetches the username, password, and roles directly from database tables (usually named users and authorities).
+
+✅ Why it’s useful:
+
+- Your application can manage users dynamically.
+
+- Credentials are persisted, not lost on app restart.
+
+- It scales well for real-world applications. 
+
+#### ❓ Why do we prefer JDBC Authentication over In-Memory Authentication?
+
+In-memory authentication stores credentials in code like:
+
+```
+User.withUsername("admin").password("{noop}pass").roles("ADMIN").build()
+```
+
+**This:**
+    
+- ✅ Works well for demos or tests
+
+- ❌ Doesn't scale
+
+- ❌ Loses users on restart
+
+- ❌ Isn't secure for production
+
+**JDBC Authentication:**
+
+- ✅ Stores users in a database (e.g., H2, MySQL)
+
+- ✅ Allows changes without modifying code
+
+- ✅ Supports secure hashing, role updates, etc.
+
+#### ❓ How do we enable JDBC Authentication in Spring Boot?
+
+**Detailed Steps:**
+
+1. First, we inject a DataSource bean:
+
+```
+@Autowired
+DataSource dataSource;
+```
+
+2. Then return a JdbcUserDetailsManager in your security config:
+
+```
+@Bean
+public UserDetailsService userDetailsService() {
+    JdbcUserDetailsManager manager = new JdbcUserDetailsManager(dataSource);
+    manager.createUser(...); // Optional user creation
+    return manager;
+}
+```
+Spring will now use this manager to:
+
+- Query the users and authorities tables.
+
+- Authenticate users using credentials stored in DB.
+
+#### ❓ Why did we get a bad SQL grammar error when using createUser()?
+
+When we used manager.createUser(...), Spring tried to execute this SQL behind the scenes:
+
+```
+INSERT INTO users (username, password, enabled) VALUES (?, ?, ?)
+```
+
+But if the `users` table doesn't exist yet in the database, you'll get:
+
+    PreparedStatementCallback; bad SQL grammar
+
+This is Spring's way of saying:
+
+    “I expected a table named users, but I couldn't find it!”
+
+#### ❓ How did we fix the table not found / bad SQL grammar issue?
+
+We created a file named schema.sql in the src/main/resources folder and added the required table definitions:
+
+```
+create table users(
+    username varchar_ignorecase(50) not null primary key,
+    password varchar_ignorecase(500) not null,
+    enabled boolean not null
+);
+
+create table authorities (
+    username varchar_ignorecase(50) not null,
+    authority varchar_ignorecase(50) not null,
+    constraint fk_authorities_users foreign key(username) references users(username)
+);
+
+create unique index ix_auth_username on authorities (username, authority);
+
+```
+
+
+Spring Boot automatically detects this file and runs it when the app starts (if auto-initialization is enabled).
+
+#### ❓ Where did we get the schema definition from?
+
+Spring Security provides a default schema for JDBC Authentication. We fetched it directly from their GitHub:
+
+[📎 users.ddl - Spring Security](https://github.com/spring-projects/spring-security/blob/main/core/src/main/resources/org/springframework/security/core/userdetails/jdbc/users.ddl)
+
+It ensures Spring can manage users with the expected structure.
 
 
 
