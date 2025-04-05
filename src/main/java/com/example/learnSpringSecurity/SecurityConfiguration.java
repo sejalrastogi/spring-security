@@ -24,10 +24,14 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+        http.authorizeHttpRequests(auth ->
+                        auth.requestMatchers("/h2-console/**").permitAll()
+                                .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 //                .formLogin(withDefaults());
                 .httpBasic(withDefaults());
+        http.headers(header -> header.frameOptions(frameOptions -> frameOptions.sameOrigin()));
+        http.csrf(csrf -> csrf.disable());
         return http.build();
 
     }
