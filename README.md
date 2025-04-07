@@ -588,6 +588,72 @@ Spring Security provides a default schema for JDBC Authentication. We fetched it
 
 It ensures Spring can manage users with the expected structure.
 
+## JWT Authentication
+
+### 10. What is JWT and why do we use it?
+
+**Answer:** 
+
+JWT stands for JSON Web Token. It is a compact, URL-safe means of representing claims between two parties.
+
+**🔑 Why use JWT?**
+
+- It enables stateless authentication.
+
+- The token contains all necessary user data (like username, roles), so the server doesn’t need to store session state.
+
+- Commonly used in REST APIs where traditional session management (like JSESSIONID) doesn't scale.
+
+### 11. How does the JWT Authentication flow work?
+
+**Answer:**
+
+**Here’s the full flow 🔁:**
+
+![JWT Authentication Flow](src/main/resources/static/jwt_authentication.png)
+
+1. User logs in → sends username & password.
+
+2. Server authenticates and generates a JWT signed with a secret key.
+
+3. JWT is returned to the client.
+
+4. Client stores it (usually in localStorage or sessionStorage).
+
+5. For future requests, client sends the JWT in the Authorization header:
+
+   `Authorization: Bearer <token>`
+
+6. Server verifies the JWT, extracts user info, and grants access.
+
+### 12. What are the responsibilities of key components like `JwtUtils`, `AuthEntryPointJwt`, and `AuthTokenFilter`?
+
+**Answer:**
+
+`JwtUtils`
+
+- Responsible for creating, validating, and parsing JWT tokens.
+
+- Uses a secret key to sign the token.
+
+- Extracts username and checks expiration during validation.
+
+`AuthEntryPointJwt`
+
+- Handles unauthorized access attempts.
+
+- Sends a 401 Unauthorized response when token is missing or invalid.
+
+- Acts as a gatekeeper when the user is not authenticated.
+
+`AuthTokenFilter`
+
+- A request filter that runs before each secured request.
+
+- Extracts the token from the Authorization header.
+
+- Validates the token using JwtUtils and sets the authentication context if valid.
+
 
 
 
